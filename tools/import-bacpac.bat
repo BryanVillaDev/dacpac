@@ -9,6 +9,19 @@ set SERVER=localhost
 set ROOT=%~dp0..
 set BACKUP_DIR=%ROOT%\backups
 
+:: Preguntar al usuario si desea borrar y recrear test_QA
+set /p CONFIRM="¿Deseas borrar y recrear la base 'test_QA'? (s/n): "
+
+if /i not "%CONFIRM%"=="s" (
+    echo ❌ Operación cancelada por el usuario.
+    pause
+    exit /b 0
+)
+
+:: Borrar base si ya existe
+echo Eliminando base de datos 'test_QA' si existe...
+sqlcmd -S %SERVER% -Q "IF DB_ID('test_QA') IS NOT NULL BEGIN ALTER DATABASE test_QA SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE test_QA; END"
+
 :: Buscar el archivo .bacpac más reciente
 for /f "delims=" %%f in ('dir /b /o-d "%BACKUP_DIR%\\*.bacpac"') do (
     set "BACPAC=%%f"
@@ -33,5 +46,5 @@ echo Usando archivo: %BACPAC%
   /TargetTrustServerCertificate:True
 
 echo.
-echo  Importación completada en base de datos 'test_QA'.
+echo ✅ Importación completada en base de datos 'test_QA'.
 pause
